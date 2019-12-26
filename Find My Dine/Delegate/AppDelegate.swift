@@ -2,26 +2,22 @@
 //  AppDelegate.swift
 //  Find My Dine
 //
-//  Created by Apple Customer on 13/12/19.
+//  Created by Manan Sheth on 13/12/19.
 //  Copyright © 2019 Manan Sheth. All rights reserved.
 //
 
 import UIKit
-import CoreTelephony
 import CoreLocation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
+    
     var window: UIWindow?
     
     //Location
     let locationManager = CLLocationManager()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
-        //Default Realm
-        RealmData.realmDefaultConfig(realmName: AppCommonConstants.AppConstantValues.constAppDBName)
         
         //Location
         self.checkUserLocationPermission()
@@ -145,7 +141,6 @@ extension AppDelegate: CLLocationManagerDelegate {
             let locValue = lastLocation.coordinate
             latValue = locValue.latitude
             lngValue = locValue.longitude
-            
         }
         
         var dictLocation = [String : Double]()
@@ -154,7 +149,7 @@ extension AppDelegate: CLLocationManagerDelegate {
         
         //Location Changed
         let locationInfo: [String : [String : Double]] = ["user_location" : dictLocation]
-        NotificationCenter.default.post(name: NSNotification.Name(rawValue: AppCommonConstants.AppConstantValues.constLocationChanged), object: nil, userInfo: locationInfo)
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: AppConstantValues.constLocationChanged), object: nil, userInfo: locationInfo)
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -162,6 +157,6 @@ extension AppDelegate: CLLocationManagerDelegate {
         print("Fail to get Location \(error)")
         
         //Location Changed
-        NotificationCenter.default.post(name: NSNotification.Name(rawValue: AppCommonConstants.AppConstantValues.constLocationChanged), object: nil, userInfo: nil)
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: AppConstantValues.constLocationChanged), object: nil, userInfo: nil)
     }
 }

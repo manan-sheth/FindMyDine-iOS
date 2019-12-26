@@ -2,7 +2,7 @@
 //  APIParserTest.swift
 //  Find My DineTests
 //
-//  Created by Apple Customer on 15/12/19.
+//  Created by Manan Sheth on 15/12/19.
 //  Copyright © 2019 Manan Sheth. All rights reserved.
 //
 
@@ -24,10 +24,11 @@ class APIParserTest: XCTestCase {
         
         let params = String(format: "lat=%.3f&lon=%.3f&entity_type=city&count=50", 21.17, 72.83)
         
-        APIParser.sharedInstance.generateWeatherRequest(reqURL: APIConstants.RestaurantAPI.apiGetRestaurantList, reqHTTPMethod: .get, reqParams: params) { (status, data, message, error) in
+        let networking = APINetworking()
+        networking.performNetworkRequest(reqEndpoint: APIConstants.restaurantsList(reqParams: params), type: AllRestaurantsData.self) { (status, response, error) in
             
             XCTAssertTrue((error == nil), "Fetch restaurant details API calling is not working as expected. Error is occuring.")
-            XCTAssertTrue(data is NSDictionary, "Fetch restaurant details API calling is not working as expected.")
+            XCTAssertTrue(response != nil, "Fetch restaurant details API calling is not working as expected.")
         }
     }
     

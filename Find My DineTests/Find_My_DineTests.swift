@@ -2,7 +2,7 @@
 //  Find_My_DineTests.swift
 //  Find My DineTests
 //
-//  Created by Apple Customer on 13/12/19.
+//  Created by Manan Sheth on 13/12/19.
 //  Copyright © 2019 Manan Sheth. All rights reserved.
 //
 

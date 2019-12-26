@@ -1,160 +1,46 @@
 //
-//  APIParser.swift
+//  AppError.swift
 //  Find My Dine
 //
-//  Created by Apple Customer on 13/12/19.
+//  Created by Manan Sheth on 16/12/19.
 //  Copyright © 2019 Manan Sheth. All rights reserved.
 //
 
-import Alamofire
+import UIKit
 
-class APIParser: NSObject {
+//MARK:- Error Protocol
+protocol ErrorProtocol: Error {
     
-    enum HTTPRequestType {
-        case get
-        case post
-        case put
-        case delete
-    }
+    var localizedTitle: String { get }
+    var localizedDescription: String? { get }
+    var requestedAPI: String { get }
+    var code: Int { get }
+}
+
+//MARK:- Custom Error
+struct APICustomError: ErrorProtocol {
     
-    //MARK:- Setup
-    typealias completionHandler = (_ status: Bool, _ responseData: Any?, _ responseString: String?, _ errorMessage: CustomError?) -> Void
+    var localizedTitle: String
+    var localizedDescription: String?
+    var requestedAPI: String
+    var code: Int
     
-    //MARK:- Accessors
-    static let sharedInstance = APIParser()
-    
-    //MARK:- Init
-    private override init() {
-        super.init()
-    }
-    
-    //MARK:- API Headers
-    private func getAPIHeaders() -> HTTPHeaders {
+    init(title: String?, desc: String? = nil, code: Int, api: String) {
         
-        var defaultHeaders = Alamofire.SessionManager.defaultHTTPHeaders
-        defaultHeaders["Content-Type"] = "application/json"
-        defaultHeaders["Accept"] = "application/json"
-        defaultHeaders["user-key"] = APIConstants.APIServer.serverKey
-        return defaultHeaders
-    }
-    
-    //MARK:- Weather Request
-    func generateWeatherRequest(reqURL: String, reqHTTPMethod: HTTPRequestType, reqParams: String? = nil, reqBodyData: Any? = nil, responseCallBack: @escaping completionHandler) {
+        self.localizedTitle = title ?? "Error"
+        self.code = code
+        self.requestedAPI = api
         
-        let url = "\(APIConstants.APIServer.serverBaseURL)/\(reqURL)"
-        guard let weatherURL = URL(string: url) else {
-            let strErrorMsg: String = "URL is not reachable."
-            responseCallBack(false, nil, strErrorMsg, CustomError.init(title: "", desc: strErrorMsg, code: 404, api: url))
-            return
+        if let msg = desc, msg.count > 0 {
+            self.localizedDescription = msg
         }
-        
-        var request = URLRequest(url: weatherURL)
-        request.timeoutInterval = APIConstants.APIServer.serverTimeout
-        request.cachePolicy = .useProtocolCachePolicy
-        
-        request.httpMethod = reqHTTPMethod == .post ? "POST" : reqHTTPMethod == .put ? "PUT" : reqHTTPMethod == .delete ? "DELETE" : "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("en-us", forHTTPHeaderField: "Accept-Language")
-        request.allHTTPHeaderFields = getAPIHeaders()
-        
-        if reqBodyData != nil {
-            
-            var jsonData: Data! = nil
-            do {
-                jsonData = try JSONSerialization.data(withJSONObject: reqBodyData!, options: [])
-                request.httpBody = jsonData
-                
-                let requestJSON = String(data: jsonData, encoding: String.Encoding.utf8)
-                print("JSON Request ==> \(requestJSON!)")
-            }
-            catch {
-                print("Array to JSON conversion failed: \(error.localizedDescription)")
-            }
-            //request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        else {
+            self.localizedDescription = getHTTPErrorMessage(status: 200)
         }
-        else if let params = reqParams {
-            
-            print("API Request Data ==> \(params)")
-            //request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-            
-            if let newUrl = URL(string: "\(url)?\(params)") {
-                request.url = newUrl
-            }
-        }
-        
-        self.restaurantAlamofireRequestToServer(ntRequest: request, responseCallBack: responseCallBack)
-    }
-    
-    private func restaurantAlamofireRequestToServer(ntRequest: URLRequest, responseCallBack: @escaping completionHandler) {
-        
-        let manager = Alamofire.SessionManager.default
-        manager.session.configuration.timeoutIntervalForRequest = APIConstants.APIServer.serverTimeout
-        
-        //Request to Server
-        manager.request(ntRequest)
-            .responseJSON { response in
-                
-                switch response.result {
-                case .failure(let error):
-                    print("Error ==> \(error)")
-                    
-                case .success(let responseObject):
-                    print("Request ==> \((ntRequest.url)!)\n Response ==> \(responseObject)")
-                }
-                
-                if let httpError = response.result.error {
-                    
-                    //TODO: HTTP ERROR
-                    let statusCode = httpError._code
-                    let strErrorMsg: String = self.getHTTPErrorMessage(status: statusCode)
-                    responseCallBack(false, nil, strErrorMsg, CustomError.init(title: "", desc: strErrorMsg, code: statusCode, api: ntRequest.url!.absoluteString))
-                }
-                else {
-                    //TODO: HTTP Response
-                    let statusCode = response.response?.statusCode
-                    
-                    //TODO: Valid API Response - Data Parsing 😇
-                    if statusCode == 200 {
-                        
-                        //Data Parsing
-                        do {
-                            if let data = response.data {
-                                
-                                if let dictResponse = try JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary {
-                                    responseCallBack(true, dictResponse, "Data fetched successfully", nil)
-                                }
-                                else {
-                                    let strErrorMsg: String = "Data not found"
-                                    responseCallBack(false, nil, strErrorMsg, CustomError.init(title: "", desc: strErrorMsg, code: 200, api: ntRequest.url!.absoluteString))
-                                }
-                            }
-                            else {
-                                let strErrorMsg: String = self.getHTTPErrorMessage(status: response.response!.statusCode)
-                                responseCallBack(false, nil, strErrorMsg, CustomError.init(title: "", desc: strErrorMsg, code: response.response!.statusCode, api: ntRequest.url!.absoluteString))
-                            }
-                        }
-                        catch {
-                            responseCallBack(false, nil, error.localizedDescription, CustomError.init(title: "", desc: error.localizedDescription, code: response.response!.statusCode, api: ntRequest.url!.absoluteString))
-                        }
-                    }
-                    else {
-                        let strErrorMsg: String = self.getHTTPErrorMessage(status: response.response!.statusCode)
-                        responseCallBack(false, nil, strErrorMsg, CustomError.init(title: "", desc: strErrorMsg, code: statusCode ?? 404, api: ntRequest.url!.absoluteString))
-                    }
-                }
-                return
-        }
-    }
-    
-    //MARK:- Server Error Messages
-    private func getServerErrorMessage(status: Int, errMsg: String, api: String) -> CustomError {
-        
-        let error = CustomError.init(title: "", desc: errMsg, code: status, api: api)
-        return error
     }
     
     //MARK:- Error Messages
-    private func getHTTPErrorMessage(status: Int) -> String {
+    func getHTTPErrorMessage(status: Int) -> String {
         
         var strMessage: String = ""
         
@@ -287,29 +173,5 @@ class APIParser: NSObject {
             strMessage = "Looks like you have an unstable network at the moment. Please try again in a while."
         }
         return strMessage
-    }
-}
-
-//MARK:- Custom Error
-protocol ErrorProtocol: Error {
-    
-    var localizedTitle: String { get }
-    var localizedDescription: String { get }
-    var requestedAPI: String { get }
-    var code: Int { get }
-}
-
-struct CustomError: ErrorProtocol {
-    
-    var localizedTitle: String
-    var localizedDescription: String
-    var requestedAPI: String
-    var code: Int
-    
-    init(title: String?, desc: String, code: Int, api: String) {
-        self.localizedTitle = title ?? "Error"
-        self.localizedDescription = desc
-        self.code = code
-        self.requestedAPI = api
     }
 }

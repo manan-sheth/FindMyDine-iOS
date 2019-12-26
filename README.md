@@ -1,6 +1,12 @@
 # FindMyDine-iOS
 Find Near by Restaurants using Zomato API
 
+### Version: 2
+1. Re-structured code with **MVVM** (Model - View - ViewModel) architecture
+2. Replaced Realm objects with **Codable** classes.
+3. Applied local caching with default objects.
+4. Implemented load more restaurants functionality.
+
 # Screenshots:![]()
 <image src= "Screenshots/1.png" height="400"/>
 <image src= "Screenshots/2.png" height="400"/>
@@ -8,8 +14,6 @@ Find Near by Restaurants using Zomato API
 
 ## Built with
 
-* [Realm](https://realm.io/) - Local Database Management
-* [Alamofire](https://github.com/Alamofire/Alamofire) - HTTP networking library
 * [SDWebImage](https://github.com/SDWebImage/SDWebImage) - Async image downloader with cache support
 
 ## Installation
@@ -35,23 +39,15 @@ target 'Find My Dine' do
     use_frameworks!
 
     # Pods for Find My Dine
-    pod 'RealmSwift'
-    pod 'Alamofire', '~> 4.0'
     pod 'SDWebImage', '~> 5.0'
     
     target 'Find My DineTests' do
         inherit! :search_paths
         # Pods for testing
-        pod 'RealmSwift'
-        pod 'Alamofire', '~> 4.0'
-        pod 'SDWebImage', '~> 5.0'
     end
-
+    
     target 'Find My DineUITests' do
         # Pods for testing
-        pod 'RealmSwift'
-        pod 'Alamofire', '~> 4.0'
-        pod 'SDWebImage', '~> 5.0'
     end
 end
 ```
